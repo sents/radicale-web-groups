@@ -778,6 +778,12 @@ function DeleteCollectionScene(user, password, collection) {
     var delete_btn = html_scene.querySelector("[name=delete]");
     var cancel_btn = html_scene.querySelector("[name=cancel]");
     var no_btn = html_scene.querySelector("[name=no]");
+    var notowner_form = html_scene.querySelector("[name=notowner]");
+    var href = collection.href;
+    var owner = true;
+
+    if (href.match("/.*?/from-.*?-.*/"))
+        {owner = false;}
 
     /** @type {?number} */ var scene_index = null;
     /** @type {?XMLHttpRequest} */ var delete_req = null;
@@ -820,6 +826,8 @@ function DeleteCollectionScene(user, password, collection) {
         html_scene.style.display = "block";
         title_form.textContent = collection.displayname || collection.href;
         error_form.textContent = error ? "Error: " + error : "";
+        if (owner) {notowner_form.hidden = true;}
+        else {notowner_form.hidden = false;}
         delete_btn.onclick = ondelete;
         cancel_btn.onclick = oncancel;
     };
