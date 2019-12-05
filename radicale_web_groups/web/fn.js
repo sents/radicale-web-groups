@@ -811,6 +811,15 @@ function DeleteCollectionScene(user, password, collection) {
         return false;
     }
 
+    function follow_href(collection) {
+        chref = collection.href.split("/");
+        frommatch = chref[2].match("from-((?:\\w|-)+)-([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})");
+        chref[1] = frommatch[1];
+        chref[2] = frommatch[2];
+        collection.href = chref.join("/");
+
+    }
+
     function oncancel() {
         try {
             pop_scene(scene_index - 1);
@@ -827,7 +836,10 @@ function DeleteCollectionScene(user, password, collection) {
         title_form.textContent = collection.displayname || collection.href;
         error_form.textContent = error ? "Error: " + error : "";
         if (owner) {notowner_form.hidden = true;}
-        else {notowner_form.hidden = false;}
+        else {
+            notowner_form.hidden = false;
+            follow_href(collection);
+        }
         delete_btn.onclick = ondelete;
         cancel_btn.onclick = oncancel;
     };
