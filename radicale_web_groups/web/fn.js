@@ -110,13 +110,15 @@ var CollectionType = {
  * @param {string} displayname
  * @param {string} description
  * @param {string} color
+ * @param {string} acl
  */
-function Collection(href, type, displayname, description, color) {
+function Collection(href, type, displayname, description, color, acl) {
     this.href = href;
     this.type = type;
     this.displayname = displayname;
     this.color = color;
     this.description = description;
+    this.acl = acl
 }
 
 /**
@@ -143,7 +145,8 @@ function get_principal(user, password, callback) {
                     CollectionType.PRINCIPAL,
                     displayname_element ? displayname_element.textContent : "",
                     "",
-                    ""), null);
+                    "",
+		    ""), null);
             } else {
                 callback(null, "Internal error");
             }
@@ -193,6 +196,7 @@ function get_collections(user, password, collection, callback) {
                 var addressbookcolor_element = response.querySelector(response_query + " > *|propstat > *|prop > *|addressbook-color");
                 var calendardesc_element = response.querySelector(response_query + " > *|propstat > *|prop > *|calendar-description");
                 var addressbookdesc_element = response.querySelector(response_query + " > *|propstat > *|prop > *|addressbook-description");
+                var acl_element = response.querySelector(response_query + " > *|propstat > *|prop > *|acl");
                 var components_query = response_query + " > *|propstat > *|prop > *|supported-calendar-component-set";
                 var components_element = response.querySelector(components_query);
                 var href = href_element ? href_element.textContent : "";
@@ -200,6 +204,7 @@ function get_collections(user, password, collection, callback) {
                 var type = "";
                 var color = "";
                 var description = "";
+		var acl = acl_element ? acl_element.textContent : "";
                 if (resourcetype_element) {
                     if (resourcetype_element.querySelector(resourcetype_query + " > *|addressbook")) {
                         type = CollectionType.ADDRESSBOOK;
@@ -231,7 +236,8 @@ function get_collections(user, password, collection, callback) {
                     }
                 }
                 if (href.substr(-1) === "/" && href !== collection.href && type) {
-                    collections.push(new Collection(href, type, displayname, description, sane_color));
+                    collections.push(new Collection(href, type, displayname,
+						    description, sane_color, acl));
                 }
             }
             collections.sort(function(a, b) {
@@ -258,6 +264,7 @@ function get_collections(user, password, collection, callback) {
                          '<C:calendar-description />' +
                          '<C:supported-calendar-component-set />' +
                          '<CR:addressbook-description />' +
+                         '<RADICALE:acl />' +
                      '</prop>' +
                  '</propfind>');
     return request;
@@ -313,6 +320,7 @@ function create_edit_collection(user, password, collection, create, callback) {
     var addressbook_color = "";
     var calendar_description = "";
     var addressbook_description = "";
+    var acl = escape_xml(collection.acl);
     var resourcetype;
     var components = "";
     if (collection.type === CollectionType.ADDRESSBOOK) {
@@ -335,7 +343,7 @@ function create_edit_collection(user, password, collection, create, callback) {
     }
     var xml_request = create ? "mkcol" : "propertyupdate";
     request.send('<?xml version="1.0" encoding="UTF-8" ?>' +
-                 '<' + xml_request + ' xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CR="urn:ietf:params:xml:ns:carddav" xmlns:I="http://apple.com/ns/ical/" xmlns:INF="http://inf-it.com/ns/ab/">' +
+                 '<' + xml_request + ' xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CR="urn:ietf:params:xml:ns:carddav" xmlns:I="http://apple.com/ns/ical/" xmlns:INF="http://inf-it.com/ns/ab/"' + ' xmlns:RADICALE="http://radicale.org/ns/">' +
                      '<set>' +
                          '<prop>' +
                              (create ? '<resourcetype><collection />' + resourcetype + '</resourcetype>' : '') +
@@ -345,6 +353,7 @@ function create_edit_collection(user, password, collection, create, callback) {
                              (addressbook_color ? '<INF:addressbook-color>' + addressbook_color + '</INF:addressbook-color>' : '') +
                              (addressbook_description ? '<CR:addressbook-description>' + addressbook_description + '</CR:addressbook-description>' : '') +
                              (calendar_description ? '<C:calendar-description>' + calendar_description + '</C:calendar-description>' : '') +
+                             (acl ? '<RADICALE:acl>' + acl + '</RADICALE:acl>' : '') +
                          '</prop>' +
                      '</set>' +
                      (!create ? ('<remove>' +
@@ -355,6 +364,7 @@ function create_edit_collection(user, password, collection, create, callback) {
                              (!addressbook_color ? '<INF:addressbook-color />' : '') +
                              (!addressbook_description ? '<CR:addressbook-description />' : '') +
                              (!calendar_description ? '<C:calendar-description />' : '') +
+                             (!acl ? '<RADICALE:acl />' : '') +
                          '</prop>' +
                      '</remove>'): '') +
                  '</' + xml_request + '>');
@@ -653,6 +663,7 @@ function CollectionsScene(user, password, collection, onerror) {
             var description_form = node.querySelector("[name=description]");
             var url_form = node.querySelector("[name=url]");
             var color_form = node.querySelector("[name=color]");
+            var acl_form = node.querySelector("[name=acl]");
             var delete_btn = node.querySelector("[name=delete]");
             var edit_btn = node.querySelector("[name=edit]");
             if (collection.color) {
@@ -677,6 +688,7 @@ function CollectionsScene(user, password, collection, onerror) {
             });
             title_form.textContent = collection.displayname || collection.href;
             description_form.textContent = collection.description;
+            acl_form.textContent = collection.acl;
             var href = SERVER + collection.href;
             url_form.href = href;
             url_form.textContent = href;
@@ -891,6 +903,7 @@ function CreateEditCollectionScene(user, password, collection) {
     var submit_btn = html_scene.querySelector("[name=submit]");
     var cancel_btn = html_scene.querySelector("[name=cancel]");
     var owner_form = edit ? null : html_scene.querySelector("[name=owner]");
+    var acl_form = html_scene.querySelector("[name=acl]")
 
     /** @type {?number} */ var scene_index = null;
     /** @type {?XMLHttpRequest} */ var create_edit_req = null;
@@ -904,6 +917,7 @@ function CreateEditCollectionScene(user, password, collection) {
     var description = edit ? collection.description : "";
     var type = edit ? collection.type : CollectionType.CALENDAR_JOURNAL_TASKS;
     var color = edit && collection.color ? collection.color : "#" + randHex(6);
+    var acl = edit ? collection.acl : "";
 
     function remove_invalid_types() {
         if (!edit) {
@@ -924,6 +938,10 @@ function CreateEditCollectionScene(user, password, collection) {
         description = description_form.value;
         type = type_form.value;
         color = color_form.value;
+	acl = acl_form.value;
+	if (!acl.match(/^(?:\w+:rw?, ?)*\w+:rw?,?$/)) {
+	    acl = ""
+	}
         if (!edit){owner = owner_form.value;}
     }
 
@@ -932,6 +950,7 @@ function CreateEditCollectionScene(user, password, collection) {
         description_form.value = description;
         type_form.value = type;
         color_form.value = color;
+	acl_form.value = acl
         error_form.textContent = error ? "Error: " + error : "";
     }
 
@@ -953,7 +972,8 @@ function CreateEditCollectionScene(user, password, collection) {
             }
             var loading_scene = new LoadingScene();
             push_scene(loading_scene);
-            var collection = new Collection(href, type, displayname, description, sane_color);
+            var collection = new Collection(href, type, displayname,
+					    description, sane_color, acl);
             var callback = function(error1) {
                 if (scene_index === null) {
                     return;

@@ -33,7 +33,8 @@
             <a href="" name="new">Create new addressbook or calendar</a>
             <article name="collectiontemplate">
                 <h2><span name="color">█ </span><span name="title" style="word-wrap:break-word;">Title</span> <small>[<span name="ADDRESSBOOK">addressbook</span><span name="CALENDAR_JOURNAL_TASKS">calendar, journal and tasks</span><span name="CALENDAR_JOURNAL">calendar and journal</span><span name="CALENDAR_TASKS">calendar and tasks</span><span name="JOURNAL_TASKS">journal and tasks</span><span name="CALENDAR">calendar</span><span name="JOURNAL">journal</span><span name="TASKS">tasks</span>]</small></h2>
-                <span name="description" style="word-wrap:break-word;">Description</span>
+                <span name="description" style="word-wrap:break-word;">Description</span><br>
+                <span name="acl" style="word-wrap:break-word;">Access Control List:</span>
                 <ul>
                     <li>URL: <a name="url" style="word-wrap:break-word;">url</a></li>
                     <li><a href="" name="edit">Edit</a></li>
@@ -60,6 +61,10 @@
                     <option value="JOURNAL">journal</option>
                     <option value="TASKS">tasks</option>
                 </select><br>
+                Individual permissions:<br>
+		Comma separated list with flags r: read, w: write<br>
+		Example: user1:rw, user2:r<br>
+                <input name="acl" type="text"><br>
                 Color:<br>
                 <input name="color" type="color"><br>
                 <span style="color: #A40000;" name="error"></span><br>
@@ -87,6 +92,9 @@
                     <option value="JOURNAL">journal</option>
                     <option value="TASKS">tasks</option>
                 </select><br>
+                Individual permissions:<br>
+		Comma separated list with flags r: read, w: write. Example: user1:rw, user2:r<br>
+                <input name="acl" type="text"><br>
                 Color:<br>
                 <input name="color" type="color"><br>
                 <span style="color: #A40000;" name="error"></span><br>
