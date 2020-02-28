@@ -320,6 +320,10 @@ function create_edit_collection(user, password, collection, create, callback) {
     var addressbook_color = "";
     var calendar_description = "";
     var addressbook_description = "";
+    if (!collection.acl.match(/^(?:\w+:(rw?|wr?), ?)*(?:\w+:(rw?|wr?),?)?$/)) {
+	callback("Invalid permission string")
+	return request
+	}
     var acl = escape_xml(collection.acl);
     var resourcetype;
     var components = "";
@@ -939,9 +943,6 @@ function CreateEditCollectionScene(user, password, collection) {
         type = type_form.value;
         color = color_form.value;
 	acl = acl_form.value;
-	if (!acl.match(/^(?:\w+:rw?, ?)*\w+:rw?,?$/)) {
-	    acl = ""
-	}
         if (!edit){owner = owner_form.value;}
     }
 
